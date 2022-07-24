@@ -23,7 +23,12 @@ contract CRDITFaucet is Ownable {
     /**
      * @dev Amount of CREDIT this faucet gives to a user.
      */
-    uint256 public faucetAmount = 100 * (10**18);
+    uint256 public faucetAmount = 95 * (10**18);
+
+    /**
+     * @dev Amount of CREDIT this faucet gives to an agent.
+     */
+    uint256 public agentRewards = 5 * (10**18);
 
     /**
      * @dev Holds the next mint available time.
@@ -39,7 +44,7 @@ contract CRDITFaucet is Ownable {
     }
 
     /**
-     * @dev Let the contract owner change the faucet Amount.
+     * @dev Let the contract owner change the faucetAmount.
      */ 
     function changeFaucetAmount(uint256 _amount) public onlyOwner returns(bool) {
         faucetAmount = _amount;
@@ -47,18 +52,31 @@ contract CRDITFaucet is Ownable {
     }
 
     /**
-     * @dev Adds 1 day to addressToTime[_msgSender()], then mints CRDIT for _msgSender().
+     * @dev Let the contract owner change the agentRewards.
+     */ 
+    function changeAgentRewards(uint256 _amount) public onlyOwner returns(bool) {
+        agentRewards = _amount;
+        return true;
+    }
+
+    /**
+     * @dev Adds 1 day to addressToTime[_msgSender()], then mints fixed amount of CRDIT for _msgSender().
      */
-    function mintFixedCRDIT() public returns(uint256) {
+    function mintFixedCRDIT(address _agent) public returns(uint256) {
         require(block.timestamp > addressToTime[_msgSender()]);
         addressToTime[_msgSender()] = addressToTime[_msgSender()] + 1 days;
         crdit.issuerMint(_msgSender(), faucetAmount);
+        crdit.issuerMint(_agent, agentRewards);
         emit MintedCRDIT(faucetAmount);
         return faucetAmount;
     }
 
-    function mintRandomCRDIT() public returns(uint256) {
+    /**
+     * @dev Adds 1 day to addressToTime[_msgSender()], then mints random amount of CRDIT for _msgSender().
+     */
+    function mintRandomCRDIT(address _agent) public returns(uint256) {
         require(block.timestamp > addressToTime[_msgSender()]);
+        addressToTime[_msgSender()] = addressToTime[_msgSender()] + 1 days;
         uint256 rand = uint256(keccak256(abi.encodePacked(_msgSender(), block.timestamp, crdit.totalSupply()))) % 3;
         uint256 value = faucetAmount;
         if (rand == 1) {
@@ -70,11 +88,8 @@ contract CRDITFaucet is Ownable {
             value = faucetAmount * 120 / 100;
             crdit.issuerMint(_msgSender(), value);
         }
+        crdit.issuerMint(_agent, agentRewards);
         emit MintedCRDIT(value);
         return value;
     }
-
-
-    
-
 }
