@@ -13,8 +13,6 @@ contract CRDITFaucet is Ownable {
 
     event MintedCRDIT(uint256 amount);
 
-    ICRDIT crdit = ICRDIT(CRDITAddress);
-
     /**
      * @dev Address of CRDIT.
      */
@@ -63,33 +61,48 @@ contract CRDITFaucet is Ownable {
      * @dev Adds 1 day to addressToTime[_msgSender()], then mints fixed amount of CRDIT for _msgSender().
      */
     function mintFixedCRDIT(address _agent) public returns(uint256) {
-        require(block.timestamp > addressToTime[_msgSender()]);
-        addressToTime[_msgSender()] = addressToTime[_msgSender()] + 1 days;
-        crdit.issuerMint(_msgSender(), faucetAmount);
+        require(block.timestamp > addressToTime[_msgSender()], "24 hours have not passed since the last mint");
+        ICRDIT crdit = ICRDIT(CRDITAddress);
+        require(crdit.mintLimitOf(address(this)) > faucetAmount + agentRewards, "This contract has reached its mint limit");
+        addressToTime[_msgSender()] = block.timestamp + 1 days;
+        bool minted = crdit.issuerMint(_msgSender(), faucetAmount);
         crdit.issuerMint(_agent, agentRewards);
-        emit MintedCRDIT(faucetAmount);
-        return faucetAmount;
+        if (minted == true) {
+            emit MintedCRDIT(faucetAmount);
+            return faucetAmount;
+        } else {
+            emit MintedCRDIT(0);
+            return 0;
+        }
     }
 
     /**
      * @dev Adds 1 day to addressToTime[_msgSender()], then mints random amount of CRDIT for _msgSender().
      */
     function mintRandomCRDIT(address _agent) public returns(uint256) {
-        require(block.timestamp > addressToTime[_msgSender()]);
-        addressToTime[_msgSender()] = addressToTime[_msgSender()] + 1 days;
-        uint256 rand = uint256(keccak256(abi.encodePacked(_msgSender(), block.timestamp, crdit.totalSupply()))) % 3;
+        require(block.timestamp > addressToTime[_msgSender()], "24 hours have not passed since the last mint");
+        ICRDIT crdit = ICRDIT(CRDITAddress);
+        require(crdit.mintLimitOf(address(this)) > (faucetAmount * 120 / 100) + agentRewards, "This contract has reached its mint limit");
+        addressToTime[_msgSender()] = block.timestamp + 1 days;
+        uint256 rand = uint256(keccak256(abi.encodePacked(_msgSender(), block.number, crdit.totalSupply()))) % 3;
         uint256 value = faucetAmount;
+        bool minted;
         if (rand == 1) {
             value = faucetAmount * 80 / 100;
-            crdit.issuerMint(_msgSender(), value);
+            minted = crdit.issuerMint(_msgSender(), value);
         } else if (rand == 2) {
-            crdit.issuerMint(_msgSender(), value);
+            minted = crdit.issuerMint(_msgSender(), value);
         } else {
             value = faucetAmount * 120 / 100;
-            crdit.issuerMint(_msgSender(), value);
+            minted = crdit.issuerMint(_msgSender(), value);
         }
         crdit.issuerMint(_agent, agentRewards);
-        emit MintedCRDIT(value);
-        return value;
+        if (minted = true) {
+            emit MintedCRDIT(value);
+            return value;
+        } else {
+            emit MintedCRDIT(0);
+            return 0;
+        }
     }
 }
