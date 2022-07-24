@@ -63,7 +63,8 @@ contract CRDITFaucet is Ownable {
      * @dev Adds 1 day to addressToTime[_msgSender()], then mints fixed amount of CRDIT for _msgSender().
      */
     function mintFixedCRDIT(address _agent) public returns(uint256) {
-        require(block.timestamp > addressToTime[_msgSender()]);
+        require(block.timestamp > addressToTime[_msgSender()], "24 hours have not passed since the last mint");
+        require(crdit.mintLimitOf(address(this)) > faucetAmount + agentRewards, "This contract has reached its mint limit");
         addressToTime[_msgSender()] = addressToTime[_msgSender()] + 1 days;
         crdit.issuerMint(_msgSender(), faucetAmount);
         crdit.issuerMint(_agent, agentRewards);
@@ -75,7 +76,8 @@ contract CRDITFaucet is Ownable {
      * @dev Adds 1 day to addressToTime[_msgSender()], then mints random amount of CRDIT for _msgSender().
      */
     function mintRandomCRDIT(address _agent) public returns(uint256) {
-        require(block.timestamp > addressToTime[_msgSender()]);
+        require(block.timestamp > addressToTime[_msgSender()], "24 hours have not passed since the last mint");
+        require(crdit.mintLimitOf(address(this)) > (faucetAmount * 120 / 100) + agentRewards, "This contract has reached its mint limit");
         addressToTime[_msgSender()] = addressToTime[_msgSender()] + 1 days;
         uint256 rand = uint256(keccak256(abi.encodePacked(_msgSender(), block.timestamp, crdit.totalSupply()))) % 3;
         uint256 value = faucetAmount;
