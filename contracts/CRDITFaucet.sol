@@ -58,6 +58,17 @@ contract CRDITFaucet is Ownable {
     }
 
     /**
+     * @dev Returns whether a user is available to mint CRDIT or not.
+     */ 
+    function checkMintReady(address _address) public view returns(bool) {
+        if(block.timestamp > addressToTime[_address]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * @dev Adds 1 day to addressToTime[_msgSender()], then mints fixed amount of CRDIT for _msgSender().
      */
     function mintFixedCRDIT(address _agent) public returns(uint256) {
