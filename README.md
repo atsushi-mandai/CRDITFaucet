@@ -1,2 +1,3 @@
 # CRDITFaucet
-CRDIT Faucet
+
+A simple faucet contract for CRDIT.
