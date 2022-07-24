@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// ATSUSHI MANDAI CRDIT Contracts
+// ATSUSHI MANDAI CRDIT Faucet Contracts
 
 pragma solidity ^0.8.0;
 
